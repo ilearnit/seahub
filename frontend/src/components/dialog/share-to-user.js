@@ -17,6 +17,7 @@ class UserItem extends React.Component {
   }
   
   onMouseEnter = () => {
+    if (this.props.itemFreezed) return;
     this.setState({isOperationShow: true});
   }
 
@@ -47,6 +48,7 @@ class UserItem extends React.Component {
             currentPermission={currentPermission}
             permissions={this.props.permissions}
             onPermissionChanged={this.onChangeUserPermission}
+            toggleItemFreezed={this.props.toggleItemFreezed}
           />
         </td>
         <td>
@@ -76,6 +78,8 @@ class UserList extends React.Component {
               permissions={this.props.permissions}
               deleteShareItem={this.props.deleteShareItem}
               onChangeUserPermission={this.props.onChangeUserPermission}
+              toggleItemFreezed={this.props.toggleItemFreezed}
+              itemFreezed={this.props.itemFreezed}
             />
           );
         })}
@@ -88,6 +92,8 @@ const propTypes = {
   isGroupOwnedRepo: PropTypes.bool,
   itemPath: PropTypes.string.isRequired,
   itemType: PropTypes.string.isRequired,
+  toggleItemFreezed: PropTypes.func,
+  itemFreezed: PropTypes.bool,
   repoID: PropTypes.string.isRequired
 };
 
@@ -281,6 +287,7 @@ class ShareToUser extends React.Component {
                   currentPermission={this.state.permission}
                   permissions={this.permissions}
                   onPermissionChanged={this.setPermission}
+                  toggleItemFreezed={this.props.toggleItemFreezed}
                 />
               </td>
               <td>
@@ -304,7 +311,7 @@ class ShareToUser extends React.Component {
             }
           </tbody>
         </table>
-        <div className="share-list-container">
+        <div className={!this.props.itemFreezed ? 'share-list-container' : 'share-list-container freeze'}>
           <table className="table-thead-hidden">
             <thead>
               <tr>
@@ -318,6 +325,8 @@ class ShareToUser extends React.Component {
               permissions={this.permissions}
               deleteShareItem={this.deleteShareItem} 
               onChangeUserPermission={this.onChangeUserPermission}
+              toggleItemFreezed={this.props.toggleItemFreezed}
+              itemFreezed={this.props.itemFreezed}
             />
             { canInvitePeople &&
             <a href={siteRoot + 'invitations/'} className="invite-link-in-popup">
