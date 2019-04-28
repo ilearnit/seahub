@@ -1,8 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import MarkdownViewer from '@seafile/seafile-editor/dist/viewer/markdown-viewer';
 import { repoID, slug, serviceURL, isPublicWiki } from '../utils/constants';
 import { Utils } from '../utils/utils';
+import { Value } from 'slate';
+import { deserialize } from '@seafile/seafile-editor/dist/utils/slate2markdown';
+import'../css/index-viewer.css';
 
 const viewerPropTypes = {
   indexContent: PropTypes.string.isRequired,
@@ -16,33 +18,41 @@ class IndexContentViewer extends React.Component {
   constructor(props) {
     super(props);
     this.links = [];
+    this.rootNode = {};
+  }
+
+  componentWillMount() {
+    this.getRootNode();
   }
 
   componentDidMount() {
     // Bind event when first loaded
-    this.links = document.querySelectorAll(`.${contentClass} a`);
-    this.links.forEach(link => {
-      link.addEventListener('click', this.onLinkClick);
-    });
+    this.bindClickEvent();
   }
 
   componentWillReceiveProps() {
     // Unbound event when updating
-    this.links.forEach(link => {
-      link.removeEventListener('click', this.onLinkClick);
-    });
+    this.removeClickEvent();
   }
 
   componentDidUpdate() {
     // Update completed, rebind event
+    this.bindClickEvent();
+  }
+
+  componentWillUnmount() {
+    // Rebinding events when the component is destroyed
+    this.removeClickEvent();
+  }
+
+  bindClickEvent = () => {
     this.links = document.querySelectorAll(`.${contentClass} a`);
     this.links.forEach(link => {
       link.addEventListener('click', this.onLinkClick);
     });
   }
 
-  componentWillUnmount() {
-    // Rebinding events when the component is destroyed
+  removeClickEvent = () => {
     this.links.forEach(link => {
       link.removeEventListener('click', this.onLinkClick);
     });
@@ -93,12 +103,11 @@ class IndexContentViewer extends React.Component {
 
         // Solving relative paths  
         if (!re.test(url)) {
-          item.data.href = serviceURL + "/published/" + slug + '/' + url;
+          item.data.href = serviceURL + '/published/' + slug + '/' + url;
         }
         // change file url 
         else if (Utils.isInternalMarkdownLink(url, repoID)) {
           let path = Utils.getPathFromInternalMarkdownLink(url, repoID);
-          console.log(path);
           // replace url
           item.data.href = serviceURL + '/published/' + slug + path;
         } 
@@ -121,23 +130,97 @@ class IndexContentViewer extends React.Component {
     return value;
   }
 
-  onContentRendered = () => {
-    // todo
+  getRootNode = () => {
+    let value = deserialize(this.props.indexContent);
+    value = value.toJSON();
+    value = this.modifyValueBeforeRender(value);
+    value = Value.fromJSON(value);
+    const nodes = value.document.nodes;
+    nodes.map((node) => {
+      if (node.type ==='unordered_list' || node.type === 'ordered_list') {
+        this.rootNode = node;
+      }
+    });
   }
 
   render() {
+    return <FolderItem rootNode={this.rootNode} bindClickEvent={this.bindClickEvent} hasChild={false}/>
+  }
+}
+
+IndexContentViewer.propTypes = viewerPropTypes;
+
+
+const FolderItemPropTypes = {
+  rootNode: PropTypes.object.isRequired,
+  bindClickEvent: PropTypes.func.isRequired,
+  hasChild: PropTypes.bool,
+};
+
+class FolderItem extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      showChild: true
+    };
+  }
+
+  toggleShowChild = () => {
+    if (!this.state.showChild) {
+      const that = this;
+      setTimeout(() => {
+        that.props.bindClickEvent();
+      }, 1);
+    }
+    this.setState({showChild: !this.state.showChild});
+  }
+
+  render() {
+    const { rootNode } = this.props;
     return (
-      <div className={contentClass}>
-        <MarkdownViewer
-          markdownContent={this.props.indexContent}
-          onContentRendered={this.onContentRendered}
-          modifyValueBeforeRender={this.modifyValueBeforeRender}
-        />
+      <div className="folder-item mx-2">
+        {
+          rootNode.nodes.map((node) => {
+            if (node.type === 'paragraph') {
+              let href = '';
+              node.nodes.map((linkNode) => {
+                href = encodeURI(linkNode.data.get('href'));
+              });
+              return (
+                <div key={node.key} className="mx-4 wiki-nav-content">
+                  <a href={href}>{node.text}</a>
+                </div>
+              );
+            } else {
+              const hasChild = (rootNode.type === 'unordered_list' && rootNode.nodes.size > 1);
+              return (
+                <React.Fragment key={node.key}>
+                  {this.props.hasChild &&
+                    <span className="switch-btn" onClick={this.toggleShowChild}>
+                      {this.state.showChild ?
+                        <i className="fa fa-caret-down"></i> : <i className="fa fa-caret-right"></i>
+                      }
+                    </span>
+                  }
+                  {this.state.showChild &&
+                    <FolderItem
+                      rootNode={node}
+                      key={node.key}
+                      hasChild={hasChild}
+                      bindClickEvent={this.props.bindClickEvent}
+                    />
+                  }
+                </React.Fragment>
+              );
+            }
+          })
+        }
       </div>
     );
   }
 }
 
-IndexContentViewer.propTypes = viewerPropTypes;
+FolderItem.propTypes = FolderItemPropTypes;
 
 export default IndexContentViewer;
