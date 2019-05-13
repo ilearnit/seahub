@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from seaserv import seafile_api
 
+from seahub import settings
 from seahub.base.fields import LowerCaseCharField
 from seahub.base.templatetags.seahub_tags import email2nickname
 from seahub.utils import get_site_scheme_and_netloc
@@ -76,7 +77,8 @@ class WikiManager(models.Manager):
                                                       passwd=None, org_id=org_id)
             else:
                 repo_id = seafile_api.create_repo(wiki_name, '', username,
-                                                  passwd=None)
+                                                  passwd=None,
+                                                  enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
 
         repo = seafile_api.get_repo(repo_id)
         assert repo is not None

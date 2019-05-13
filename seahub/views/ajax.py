@@ -1260,7 +1260,8 @@ def _create_repo_common(request, repo_name, repo_desc, encryption,
                                                       username, None, org_id)
             else:
                 repo_id = seafile_api.create_repo(repo_name, repo_desc,
-                                                  username, None)
+                                                  username, None,
+                                                  enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
         else:
             if is_org_context(request):
                 org_id = request.user.org.org_id

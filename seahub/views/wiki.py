@@ -28,6 +28,7 @@ import seaserv
 from seaserv import seafile_api
 from pysearpc import SearpcError
 
+from seahub import settings
 from seahub.auth.decorators import login_required
 from seahub.base.decorators import user_mods_check
 from seahub.wiki.models import PersonalWiki, WikiDoesNotExist, WikiPageMissing
@@ -170,7 +171,8 @@ def personal_wiki_create(request):
     passwd = None
     permission = "rw"
 
-    repo_id = seafile_api.create_repo(repo_name, repo_desc, username, passwd)
+    repo_id = seafile_api.create_repo(repo_name, repo_desc, username, passwd,
+            enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
     if not repo_id:
         return json_error(_(u'Failed to create'), 500)
 

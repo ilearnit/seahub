@@ -258,7 +258,8 @@ def create_group_repo(request, group_id):
                     encrypted_file_key, enc_version=2)
             else:
                 repo_id = seafile_api.create_repo(repo_name, repo_desc,
-                                                  username, None)
+                                                  username, None,
+                                                  enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
         except SearpcError, e:
             logger.error(e)
             return json_error(_(u'Failed to create'))
@@ -416,7 +417,8 @@ def group_wiki_create(request, group):
     passwd = None
     permission = "rw"
 
-    repo_id = seafile_api.create_repo(repo_name, repo_desc, user, passwd)
+    repo_id = seafile_api.create_repo(repo_name, repo_desc, user, passwd,
+            enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
     if not repo_id:
         return json_error(_(u'Failed to create'), 500)
 

@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 
 from seaserv import seafile_api
 
+from seahub import settings
 from seahub.options.models import UserOptions
 from seahub.api2.authentication import TokenAuthentication
 from seahub.api2.throttling import UserRateThrottle
@@ -29,7 +30,8 @@ class AdminDefaultLibrary(APIView):
     def create_default_repo(self, username):
 
         default_repo_id = seafile_api.create_repo(name=_("My Library"),
-                desc=_("My Library"), username=username, passwd=None)
+                desc=_("My Library"), username=username, passwd=None,
+                enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
 
         sys_repo_id = get_system_default_repo_id()
         if not sys_repo_id or not seafile_api.get_repo(sys_repo_id):

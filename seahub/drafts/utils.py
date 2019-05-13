@@ -8,6 +8,7 @@ from seaserv import send_message
 
 from seahub.utils import normalize_file_path, check_filename_with_rename
 from seahub.tags.models import FileUUIDMap
+from seahub import settings
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,8 @@ def create_user_draft_repo(username, org_id=-1):
                                               passwd=None, org_id=org_id)
     else:
         repo_id = seafile_api.create_repo(repo_name, '', username,
-                                          passwd=None)
+                                          passwd=None,
+                                          enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
     return repo_id
 
 

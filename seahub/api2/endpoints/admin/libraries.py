@@ -10,6 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.utils.translation import ugettext as _
 from seaserv import ccnet_api, seafile_api
 
+from seahub import settings
 from seahub.api2.authentication import TokenAuthentication
 from seahub.api2.throttling import UserRateThrottle
 from seahub.api2.utils import api_error
@@ -176,7 +177,8 @@ class AdminLibraries(APIView):
             repo_owner = username
 
         try:
-            repo_id = seafile_api.create_repo(repo_name, '', repo_owner, None)
+            repo_id = seafile_api.create_repo(repo_name, '', repo_owner, None,
+                    enc_version=settings.ENCRYPTED_LIBRARY_VERSION)
         except Exception as e:
             logger.error(e)
             error_msg = 'Internal Server Error'
